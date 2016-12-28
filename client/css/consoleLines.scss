@@ -1,0 +1,31 @@
+.console-line {
+  color: #eee;
+  padding: 5px;
+  &.odd {
+    background-color: #1c1c1c;
+  }
+  &.even {
+    background-color: #292929;
+  }
+  &.death, .death {
+    color: #ff0546;
+  }
+  &.exits, .exits {
+    color: #1cff50;
+  }
+  &.contents, .contents {
+    color: #ffa049;
+  }
+  &.damage-light {
+    background-color: #5f0000;
+  }
+  &.damage-moderate {
+    background-color: #800101;
+  }
+  &.damage-heavy {
+    background-color: #b90000;
+  }
+  &.damage-massive {
+    background-color: #ff0000;
+  }
+}

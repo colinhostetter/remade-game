@@ -1,0 +1,142 @@
+@import "bourbon";
+
+* {
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+body {
+  background: #666;
+}
+.remade-client {
+  margin: auto;
+  background: #222;
+  border: 1px solid #000;
+  max-width: 100%;
+}
+.remade-console {
+  height: 400px;
+  width: 100%;
+  overflow: auto;
+  font-size: 16px;
+  color: #eee;
+  font-family: Verdana;
+  border: inset 3px #555;
+}
+.remade-command-prompt {
+  @include display(flex);
+  input {
+    @include flex(1);
+    font-size: 16px;
+    padding: 3px;
+  }
+}
+.remade-client {
+  @include display(flex);
+  max-width: 800px;
+}
+.remade-client-left {
+  @include flex(1);
+}
+.remade-client-right {
+  width: 200px;
+}
+.fillable-bar-outer {
+  width: 100%;
+  height: 25px;
+  background: #ccc;
+  position: relative;
+  @include display(flex);
+  @include align-items(center);
+}
+.fillable-bar-fill {
+  height: 100%;
+  background: green;
+}
+.fillable-bar-text {
+  color: black;
+  text-shadow: rgba(0,0,0,0.2) 1px 1px 1px;
+  position: absolute;
+  text-align: center;
+  width: 100%;
+}
+.minimap-row {
+  @include display(flex);
+  @include transform(scaleY(0.65));
+  height: 8px;
+}
+.minimap-icon {
+  color: white;
+  font-family: monospace;
+  height: 12px;
+  &.current-location, &.current-location-exit {
+    color: red;
+  }
+}
+.ability-panel {
+  @include display(flex);
+}
+.ability-button {
+  width: 75px;
+  height: 75px;
+  background-size: cover;
+  @include display(flex);
+  @include justify-content(flex-start);
+  @include align-items(flex-end);
+  .hotkey-indicator {
+    background: rgba(255, 255, 255, 0.85);
+    color: black;
+    font-weight: bold;
+    font-family: sans-serif;
+    font-size: 24px;
+    padding: 2px 5px;
+    border-top-right-radius: 5px;  
+  }
+}
+.physical-thing {
+  margin: 2px;
+  border-radius: 3px;
+  font-size: 14px;
+  .target-crosshair {
+    height: 25px;
+    width: 25px;
+  }
+  .short-desc {
+    margin-left: 3px;
+  }
+}
+.physical-thing-text-wrapper {
+  padding-left: 3px;
+  @include display(flex);
+  @include align-items(center);
+}
+.hand-indicators {
+  @include display(flex);
+  height: 40px;
+  .hand-indicator {
+    @include flex(1);
+    @include display(flex);
+    @include justify-content(center);
+    @include align-items(center);
+    border: 1px solid white;
+    background: #ccc;
+    color: #000;
+    font-size: 16px;
+    &.free {
+      background: rgb(187, 22, 174);
+      color: #fff;
+    }
+  }
+}
+.purify-indicator {
+  @include display(flex);
+  @include justify-content(center);
+  @include align-items(center);
+  height: 35px;
+  width: 100%;
+  &.ready {
+    background: #ccfaff;
+  }
+  &.cooldown {
+    background: #aaa;
+  }
+}
