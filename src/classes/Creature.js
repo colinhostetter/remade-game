@@ -5,6 +5,7 @@ const uuid = require("uuid");
 const PhysicalThing = require("./PhysicalThing");
 const Hand = require("./Hand");
 const afflictions = require("./afflictions");
+const constants = require("../constants");
 
 class Creature extends PhysicalThing {
   constructor(startingLoc, props) {
@@ -16,7 +17,6 @@ class Creature extends PhysicalThing {
     this.rightHand = new Hand("right");
     this.thinkInterval = 1000;
     this.purifyReady = true;
-    this.cureCooldown = 5000;
     Object.assign(this, props);
     setImmediate(() => {
       this._thinkIntervalId = setInterval(this.think.bind(this), this.thinkInterval);
@@ -130,18 +130,25 @@ class Creature extends PhysicalThing {
   purify(affName) {
     const aff = this.afflictions.find(i => i.name === affName);
     if (!this.purifyReady) {
-      return "Your pendant isn't ready to purify another affliction yet.";
-    } else if (aff) {
-      this.cure(aff);
+      return "You can't purify yourself again so soon.";
+    } else if (aff || affName === "health") {
+      if (aff) {
+        this.cure(aff);
+        this.emit("line", `You are briefly enveloped in a brilliant white light as you purify an affliction. ${aff.cureLine}`)
+        this.project(this.shortDesc + ` is briefly enveloped in a brilliant white light as ${utils.pronoun(this, "subject")} purifies an affliction. ${aff.cureLineThirdParty}`);
+      } else if (affName === "health") {
+        this.currentHealth = Math.min(this.maxHealth, this.currentHealth + constants.PURIFY_HEAL_AMOUNT);
+        this.emit("line", "You are briefly enveloped in a brilliant white light as your wounds close.");
+        this.project(this.shortDesc + ` is briefly envloped in a brilliant white light as ${utils.pronoun(this, "possessive")} wounds close.`);
+      }
       this.purifyReady = false;
       this.emit("purifyUsed");
-      this.emit("line", `Your are briefly enveloped in a brilliant white light as your pendant purifies an affliction. ${aff.cureLine}`)
       this._purifyTimeoutId = setTimeout(() => {
         this.purifyReady = true;
         this._purifyTimeoutId = null;
         this.emit("purifyReady");
-        this.emit("line", "Your pendant is ready to purify another affliction.");
-      }, 5000);
+        this.emit("line", "You are able to purify yourself once more.");
+      }, constants.PURIFY_COOLDOWN);
     }
   }
 }

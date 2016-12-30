@@ -10,6 +10,9 @@ const afflictions = {
     fillColor: "blue",
     textColor: "white",
     hotkey: "p"
+  },
+  health: {
+    hotkey: "h"
   }
 };
 

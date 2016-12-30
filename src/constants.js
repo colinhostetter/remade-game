@@ -1,0 +1,4 @@
+module.exports = {
+  PURIFY_HEAL_AMOUNT: 25,
+  PURIFY_COOLDOWN: 4000
+}
