@@ -27,5 +27,7 @@
     "uuid": "^3.0.1",
     "webpack": "^1.14.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "jasmine": "^2.5.2"
+  }
 }

@@ -16,7 +16,7 @@ class Fireball extends Ability {
     const caster = this.owner;
     caster.emit("line", `You gesture grandly with ${utils.handstr(hands)} and a roaring ball of fire flies forth, burning ${target.shortDesc} horribly.`);
     target.emit("line", {type: "damage-heavy", text: `${utils.capitalize(caster.shortDesc)} gestures grandly at you with ${utils.handstr(hands, caster)} and a roaring ball of fire flies forth, burning you horribly.`})
-    target.takeDamage({
+    target.damage({
       attacker: caster,
       amount: hands.length * 20
     })

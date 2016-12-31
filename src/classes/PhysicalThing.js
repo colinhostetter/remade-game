@@ -6,7 +6,7 @@ const uuid = require("uuid");
 class PhysicalThing extends EventEmitter {
   constructor(initialLoc) {
     super();
-    if (!initialLoc) throw new Error("PhysicalThing created without initial location!");
+    if (!initialLoc || !initialLoc.contents) throw new Error("PhysicalThing created without initial location!");
     this.setLocation(initialLoc);
     this.id = uuid();
   }

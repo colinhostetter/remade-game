@@ -23,7 +23,7 @@ module.exports = {
     onTick: function(victim) {
       victim.emit("line", {type: "damage-light", text: `The searing flames engulfing you burn your flesh horribly!`});
       victim.project(`The searing flames engulfing ${victim.shortDesc} burn ${utils.pronoun(victim, "possessive")} flesh horribly.`);
-      victim.takeDamage({attacker: this.source, amount: 3});
+      victim.damage({attacker: this.source, amount: 3});
     },
     cureLine: "The flames on your body go out."
   },

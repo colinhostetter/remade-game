@@ -17,7 +17,7 @@ module.exports = class ParalyticShock extends Ability {
     caster.emit("line", `You flick ${utils.handstr(hands)} at ${target.shortDesc}, and ${utils.pronoun(target, "subject")} stiffens like a board as a bolt of electricity runs through ${utils.pronoun(target, "possessive")} body.`)
     target.emit("line", {type: "damage-light", text: `${caster.shortDesc} flicks ${utils.handstr(hands, caster)} at you, and your muscles suddenly seize up as an electric shock runs through your body.`});
     target.afflict("paralysis", caster);
-    target.takeDamage({
+    target.damage({
       attacker: caster,
       amount: 3
     });

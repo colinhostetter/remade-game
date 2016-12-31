@@ -17,6 +17,8 @@ class Creature extends PhysicalThing {
     this.rightHand = new Hand("right");
     this.thinkInterval = 1000;
     this.purifyReady = true;
+    this.purifyHealAmount = constants.PURIFY_HEAL_AMOUNT;
+    this.purifyCooldown = constants.PURIFY_COOLDOWN;
     Object.assign(this, props);
     setImmediate(() => {
       this._thinkIntervalId = setInterval(this.think.bind(this), this.thinkInterval);
@@ -58,8 +60,8 @@ class Creature extends PhysicalThing {
       purifyReady: this.purifyReady
     }
   }
-  takeDamage({ attacker, amount }) {
-    this.currentHealth = this.currentHealth - amount;
+  damage({ attacker, amount }) {
+    this.currentHealth = Math.max(0, this.currentHealth - amount);
     this.emit("damage", { attacker, amount });
     this.location.contents.filter(i => i !== this).forEach(i => i.emit("locationContentsUpdated"));
     if (this.currentHealth <= 0) {
@@ -71,7 +73,7 @@ class Creature extends PhysicalThing {
     if (this._thinkIntervalId) clearInterval(this._thinkIntervalId)
     this.currentHealth = 0;
     this.afflictions.forEach(aff => this.cure(aff));
-    killer.emit("line", `You kill ${this.shortDesc}!`);
+    if (killer) killer.emit("line", `You kill ${this.shortDesc}!`);
     this.emit("line", {type: "death", text: "You die..."});
     this.emit("death");
   }
@@ -87,9 +89,9 @@ class Creature extends PhysicalThing {
   afflict(affName, source, params = {}) {
     if (!this.alive) return;
     // Create affliction object
-    const proto = afflictions[affName]
+    const proto = afflictions[affName];
     if (!proto) {
-      throw new Error(`Tried to create non-existent afflictions ${affName}.`);
+      throw new Error(`Tried to create non-existent affliction ${affName}.`);
     }
     const aff = Object.create(proto);
     aff.source = source;
@@ -118,9 +120,9 @@ class Creature extends PhysicalThing {
     if (aff.tick) {
       aff._tickIntervalId = setInterval(() => aff.onTick(aff.victim), aff.tick);
     }
-    this.emit("afflicted", {name: aff.name, id: aff.id, duration: aff.duration, textColor: aff.textColor, fillColor: aff.fillColor});
+    this.emit("afflicted", {name: aff.name, id: aff.id, duration: aff.duration});
   }
-  cure(aff, silent) {
+  cure(aff) {
     const index = this.afflictions.findIndex(i => i === aff);
     if (aff._durationTimeoutId) clearTimeout(aff._durationTimeoutId);
     if (aff._tickIntervalId) clearInterval(aff._tickIntervalId);
@@ -137,7 +139,7 @@ class Creature extends PhysicalThing {
         this.emit("line", `You are briefly enveloped in a brilliant white light as you purify an affliction. ${aff.cureLine}`)
         this.project(this.shortDesc + ` is briefly enveloped in a brilliant white light as ${utils.pronoun(this, "subject")} purifies an affliction. ${aff.cureLineThirdParty}`);
       } else if (affName === "health") {
-        this.currentHealth = Math.min(this.maxHealth, this.currentHealth + constants.PURIFY_HEAL_AMOUNT);
+        this.currentHealth = Math.min(this.maxHealth, this.currentHealth + this.purifyHealAmount);
         this.emit("line", "You are briefly enveloped in a brilliant white light as your wounds close.");
         this.project(this.shortDesc + ` is briefly envloped in a brilliant white light as ${utils.pronoun(this, "possessive")} wounds close.`);
       }
@@ -148,7 +150,7 @@ class Creature extends PhysicalThing {
         this._purifyTimeoutId = null;
         this.emit("purifyReady");
         this.emit("line", "You are able to purify yourself once more.");
-      }, constants.PURIFY_COOLDOWN);
+      }, this.purifyCooldown);
     }
   }
 }
