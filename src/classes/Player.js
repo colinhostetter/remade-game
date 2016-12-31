@@ -37,7 +37,7 @@ class Player {
       });
       hand.on("cooldown", () => sendState());
     });
-    const statusEvents = ["damage", "movement", "afflicted", "cured", "purifyUsed", "purifyReady"]
+    const statusEvents = ["damage", "movement", "modifierAdded", "modifierRemoved", "purifyUsed", "purifyReady"]
     statusEvents.forEach(event => this.character.on(event, sendState));
     this.character.on("locationContentsUpdated", sendLocationContents);
     this.character.on("afflicted", aff => socket.emit("afflicted", aff));
@@ -75,6 +75,7 @@ class Player {
     socket.on("purify", ({name}) => {
       sendLine(this.character.purify(name));
     })
+    socket.on("counterspell", () => this.character.counterspell());
   }
 
   act(command) {

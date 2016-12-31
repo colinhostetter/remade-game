@@ -49,6 +49,7 @@ export default function(socket) {
     w: cast(1),
     e: cast(2),
     r: cast(3),
+    "`": () => socket.emit("counterspell")
   });
 
   document.addEventListener("keydown", event => {

@@ -12,15 +12,19 @@ class Fireball extends Ability {
     this.name = "fireball";
     this.icon = "fireball.png";
   }
-  cast(target, hands) {
-    const caster = this.owner;
-    caster.emit("line", `You gesture grandly with ${utils.handstr(hands)} and a roaring ball of fire flies forth, burning ${target.shortDesc} horribly.`);
-    target.emit("line", {type: "damage-heavy", text: `${utils.capitalize(caster.shortDesc)} gestures grandly at you with ${utils.handstr(hands, caster)} and a roaring ball of fire flies forth, burning you horribly.`})
+  cast(caster, target, hands, countered) {
+    if (countered) {
+      target.emit("line", {type: "damage-heavy", text: `You gesture grandly with ${utils.handstr(hands)} and a roaring ball of fire flies forth, but rebounds off ${caster.shortDesc}'s counterspell! ${utils.capitalize(utils.pronoun(caster, "subject"))} flings the fireball back at you, burning you horribly!`});
+      caster.emit("line", `${utils.capitalize(target.shortDesc)} gestures grandly at you with ${utils.handstr(hands, target)} and a roaring ball of fire flies forth, but your counterspell is ready! You fling the fireball back at ${utils.pronoun(target, "object")}, burning ${utils.pronoun(target, "object")} horribly!`);
+    } else {
+      caster.emit("line", `You gesture grandly with ${utils.handstr(hands)} and a roaring ball of fire flies forth, burning ${target.shortDesc} horribly.`);
+      target.emit("line", {type: "damage-heavy", text: `${utils.capitalize(caster.shortDesc)} gestures grandly at you with ${utils.handstr(hands, caster)} and a roaring ball of fire flies forth, burning you horribly.`})
+    }
     target.damage({
       attacker: caster,
       amount: hands.length * 20
     })
-    target.afflict("ablaze", caster);
+    target.addModifier("ablaze", caster);
     return true;
   }
 }

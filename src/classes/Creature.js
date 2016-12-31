@@ -4,7 +4,7 @@ const utils = require("../utils");
 const uuid = require("uuid");
 const PhysicalThing = require("./PhysicalThing");
 const Hand = require("./Hand");
-const afflictions = require("./afflictions");
+const modifiers = require("./modifiers");
 const constants = require("../constants");
 
 class Creature extends PhysicalThing {
@@ -12,13 +12,15 @@ class Creature extends PhysicalThing {
     super(startingLoc);
     this.alive = true;
     this.abilities = [];
-    this.afflictions = [];
+    this.modifiers = [];
     this.leftHand = new Hand("left");
     this.rightHand = new Hand("right");
     this.thinkInterval = 1000;
     this.purifyReady = true;
     this.purifyHealAmount = constants.PURIFY_HEAL_AMOUNT;
     this.purifyCooldown = constants.PURIFY_COOLDOWN;
+    this.counterspellReady = true;
+    this.counterspellCooldown = constants.COUNTERSPELL_COOLDOWN;
     Object.assign(this, props);
     setImmediate(() => {
       this._thinkIntervalId = setInterval(this.think.bind(this), this.thinkInterval);
@@ -26,7 +28,7 @@ class Creature extends PhysicalThing {
   }
   moveTo(loc) {
     if (!this.alive) return;
-    const affs = this.afflictions.filter(i => i.preventsMovement);
+    const affs = this.modifiers.filter(i => i.preventsMovement);
     if (affs.length) {
       return affs[0].movementPreventedLine;
     }
@@ -56,7 +58,7 @@ class Creature extends PhysicalThing {
       },
       shortDesc: this.shortDesc,
       id: this.id,
-      afflictions: this.afflictions.map(i => i.name),
+      modifiers: this.modifiers.map(i => i.name),
       purifyReady: this.purifyReady
     }
   }
@@ -72,7 +74,7 @@ class Creature extends PhysicalThing {
     this.alive = false;
     if (this._thinkIntervalId) clearInterval(this._thinkIntervalId)
     this.currentHealth = 0;
-    this.afflictions.forEach(aff => this.cure(aff));
+    this.modifiers.forEach(aff => this.removeModifier(aff));
     if (killer) killer.emit("line", `You kill ${this.shortDesc}!`);
     this.emit("line", {type: "death", text: "You die..."});
     this.emit("death");
@@ -86,56 +88,57 @@ class Creature extends PhysicalThing {
   project(line) {
     this.location.contents.filter(i => i !== this).forEach(i => i.emit("line", line));
   }
-  afflict(affName, source, params = {}) {
+  addModifier(name, source, params = {}) {
     if (!this.alive) return;
-    // Create affliction object
-    const proto = afflictions[affName];
+    // Create modifier object
+    const proto = modifiers[name];
     if (!proto) {
-      throw new Error(`Tried to create non-existent affliction ${affName}.`);
+      throw new Error(`Tried to create non-existent modifier ${name}.`);
     }
-    const aff = Object.create(proto);
-    aff.source = source;
-    aff.id = uuid();
-    Object.assign(aff, params);
-    aff.victim = this;
+    const mod = Object.create(proto);
+    mod.source = source;
+    mod.id = uuid();
+    Object.assign(mod, params);
+    mod.target = this;
     
-    // Do we already have this affliction?
-    const existingAffIndex = this.afflictions.findIndex(i => i.name === aff.name)
+    // Do we already have this modifier?
+    const existingAffIndex = this.modifiers.findIndex(i => i.name === mod.name)
     if (existingAffIndex > -1) {
       // Replace the existing one with this one
-      const existing = this.afflictions[existingAffIndex];
+      const existing = this.modifiers[existingAffIndex];
       if (existing._durationTimeoutId) clearTimeout(existing._durationTimeoutId);
       if (existing._tickIntervalId) clearInterval(existing._tickIntervalId);
-      this.afflictions.splice(existingAffIndex, 1, aff);
+      this.modifiers.splice(existingAffIndex, 1, mod);
     } else {
-      this.afflictions.push(aff);
+      this.modifiers.push(mod);
     }
     
-    if (aff.duration) {
-      aff._durationTimeoutId = setTimeout(() => {
-        this.cure(aff);
-        this.emit("line", aff.cureLine);
-      }, aff.duration);
+    if (mod.duration) {
+      mod._durationTimeoutId = setTimeout(() => {
+        this.removeModifier(mod);
+        this.emit("line", mod.expireLine || mod.cureLine);
+        if (mod.onExpire) mod.onExpire();
+      }, mod.duration);
     }
-    if (aff.tick) {
-      aff._tickIntervalId = setInterval(() => aff.onTick(aff.victim), aff.tick);
+    if (mod.tick) {
+      mod._tickIntervalId = setInterval(() => mod.onTick(), mod.tick);
     }
-    this.emit("afflicted", {name: aff.name, id: aff.id, duration: aff.duration});
+    this.emit("modifierAdded", {name: mod.name, id: mod.id, duration: mod.duration});
   }
-  cure(aff) {
-    const index = this.afflictions.findIndex(i => i === aff);
-    if (aff._durationTimeoutId) clearTimeout(aff._durationTimeoutId);
-    if (aff._tickIntervalId) clearInterval(aff._tickIntervalId);
-    this.afflictions.splice(index, 1);
-    this.emit("cured", aff);
+  removeModifier(mod) {
+    const index = this.modifiers.findIndex(i => i === mod);
+    if (mod._durationTimeoutId) clearTimeout(mod._durationTimeoutId);
+    if (mod._tickIntervalId) clearInterval(mod._tickIntervalId);
+    this.modifiers.splice(index, 1);
+    this.emit("modifierRemoved", mod);
   }
   purify(affName) {
-    const aff = this.afflictions.find(i => i.name === affName);
+    const aff = this.modifiers.find(i => i.name === affName);
     if (!this.purifyReady) {
       return "You can't purify yourself again so soon.";
     } else if (aff || affName === "health") {
       if (aff) {
-        this.cure(aff);
+        this.removeModifier(aff);
         this.emit("line", `You are briefly enveloped in a brilliant white light as you purify an affliction. ${aff.cureLine}`)
         this.project(this.shortDesc + ` is briefly enveloped in a brilliant white light as ${utils.pronoun(this, "subject")} purifies an affliction. ${aff.cureLineThirdParty}`);
       } else if (affName === "health") {
@@ -151,6 +154,21 @@ class Creature extends PhysicalThing {
         this.emit("purifyReady");
         this.emit("line", "You are able to purify yourself once more.");
       }, this.purifyCooldown);
+    }
+  }
+  hasModifier(name) {
+    return Boolean(this.modifiers.find(i => i.name === name));
+  }
+  counterspell() {
+    if (this.counterspellReady) {
+      this.addModifier("counterspell", this);
+      this.counterspellReady = false;
+      this.emit("counterspellReady");
+      this.emit("line", "You mentally prepare a counter to incoming magic.");
+    } else if (this.hasModifier("counterspell")) {
+      this.emit("line", "Your counterspell is already up.");
+    } else {
+      this.emit("line", "You can't prepare a counterspell again so soon.");
     }
   }
 }

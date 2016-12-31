@@ -12,11 +12,11 @@ class Ability {
    */
   activate(target, ...args) {
     const caster = this.owner;
-    const affs = caster.afflictions.filter(i => i.preventsCasting);
+    const mods = caster.modifiers.filter(i => i.preventsCasting);
     if (!caster.alive) { 
       return "You are dead and cannot do that.";
-    } else if (affs.length) {
-      return affs[0].castPreventedLine;
+    } else if (mods.length) {
+      return mods[0].castPreventedLine;
     } else if (this.targeted && !target) {
       return "You must target an enemy.";
     } else if (this.targeted && !this.range && caster.location !== target.location) {
@@ -45,7 +45,13 @@ class Ability {
     if (notFree.length) {
       return `Your ${notFree.length > 1 ? "hands are" : notFree[0].name + " hand is"} not free.`;
     }
-    const success = this.cast(target, hands);
+    
+    if (target.hasModifier("counterspell")) {
+      var success = this.cast(target, this.owner, hands, true);
+    } else {
+      var success = this.cast(this.owner, target, hands, false);
+    }
+    
     if (success) {
       hands.forEach(hand => hand.use(this.cooldown));
     }

@@ -22,7 +22,7 @@ class RemadeClient extends React.Component {
       }
     });
     socket.on("characterState", character => {
-      const afflictionTimers = this.state.afflictionTimers.filter(i => character.afflictions.includes(i.name));
+      const afflictionTimers = this.state.afflictionTimers.filter(i => character.modifiers.includes(i.name));
       this.setState({ character, afflictionTimers });
     })
     socket.on("abilities", abilities => this.setState({ abilities }));
