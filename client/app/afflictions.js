@@ -13,6 +13,10 @@ const afflictions = {
   },
   health: {
     hotkey: "h"
+  },
+  electricField: {
+    hotkey: "f",
+    fillColor: "#7cd3ff"
   }
 };
 

@@ -28,13 +28,14 @@ class RemadeClient extends React.Component {
     socket.on("abilities", abilities => this.setState({ abilities }));
     socket.on("locationContents", locationContents => this.setState({ locationContents }));
     socket.on("targetChanged", target => this.setState({target}));
-    socket.on("afflicted", aff => {
+    socket.on("modifierAdded", mod => {
+      console.log(mod)
       const afflictionTimers = [...this.state.afflictionTimers];
-      const index = afflictionTimers.findIndex(i => i.name === aff.name)
+      const index = afflictionTimers.findIndex(i => i.name === mod.name)
       if (index > -1) {
-        afflictionTimers.splice(index, 1, aff);
+        afflictionTimers.splice(index, 1, mod);
       } else {
-        afflictionTimers.push(aff);
+        afflictionTimers.push(mod);
       }
       this.setState({ afflictionTimers })
     })

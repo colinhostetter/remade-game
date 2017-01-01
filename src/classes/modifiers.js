@@ -38,6 +38,40 @@ module.exports = {
     castPreventedLine: "You are paralyzed and cannot do that.",
     cureLine: "You are no longer paralyzed."
   },
+  electricField: {
+    name: "electricField",
+    label: "electric field",
+    duration: 6000,
+    hasCharges: true,
+    onRefresh: function(oldMod, newMod) {
+      newMod.charges = oldMod.charges + 1;
+    },
+    onPurify: function() {
+      if (this.target.alive) {
+        const dmg = this.charges * this.charges / 2;
+        let type = "", text = "The electric field around you detonates!"
+        if (dmg < 10) {
+          type = "damage-light";
+        } else if (dmg < 20) {
+          type = "damage-medium";
+        } else if (dmg < 40) {
+          type = "damage-heavy";
+        } else {
+          text = "The electric field around you detonates, and you scream in agony as a deadly current runs through your body!";
+          type = "damage-massive";
+        }
+        this.target.emit("line", {type, text});
+        this.target.damage({
+          amount: dmg,
+          attacker: this.source
+        });
+      }
+    },
+    onExpire: this.onPurify,
+    cureLineThirdParty: function() {
+      return `The electric field around ${utils.pronoun(this.target, "object")} detonates.`;
+    },
+  },
 
   // buffs
   counterspell: {

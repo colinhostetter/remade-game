@@ -98,6 +98,7 @@ class Creature extends PhysicalThing {
     const mod = Object.create(proto);
     mod.source = source;
     mod.id = uuid();
+    if (mod.hasCharges) mod.charges = 1;
     Object.assign(mod, params);
     mod.target = this;
     
@@ -108,6 +109,9 @@ class Creature extends PhysicalThing {
       const existing = this.modifiers[existingAffIndex];
       if (existing._durationTimeoutId) clearTimeout(existing._durationTimeoutId);
       if (existing._tickIntervalId) clearInterval(existing._tickIntervalId);
+      if (mod.onRefresh) {
+        mod.onRefresh(existing, mod);
+      }
       this.modifiers.splice(existingAffIndex, 1, mod);
     } else {
       this.modifiers.push(mod);
@@ -116,14 +120,21 @@ class Creature extends PhysicalThing {
     if (mod.duration) {
       mod._durationTimeoutId = setTimeout(() => {
         this.removeModifier(mod);
-        this.emit("line", mod.expireLine || mod.cureLine);
+        this.emit("line", mod.expireLine || mod.cureLine || "");
         if (mod.onExpire) mod.onExpire();
       }, mod.duration);
     }
     if (mod.tick) {
       mod._tickIntervalId = setInterval(() => mod.onTick(), mod.tick);
     }
-    this.emit("modifierAdded", {name: mod.name, id: mod.id, duration: mod.duration});
+    this.emit("modifierAdded", {
+      name: mod.name, 
+      label: mod.label, 
+      id: mod.id,
+      duration: mod.duration,
+      hasCharges: mod.hasCharges,
+      charges: mod.charges
+    });
   }
   removeModifier(mod) {
     const index = this.modifiers.findIndex(i => i === mod);
@@ -139,8 +150,9 @@ class Creature extends PhysicalThing {
     } else if (aff || affName === "health") {
       if (aff) {
         this.removeModifier(aff);
-        this.emit("line", `You are briefly enveloped in a brilliant white light as you purify an affliction. ${aff.cureLine}`)
-        this.project(this.shortDesc + ` is briefly enveloped in a brilliant white light as ${utils.pronoun(this, "subject")} purifies an affliction. ${aff.cureLineThirdParty}`);
+        this.emit("line", `You are briefly enveloped in a brilliant white light as you purify an affliction. ${aff.cureLine || ""}`)
+        this.project(this.shortDesc + ` is briefly enveloped in a brilliant white light as ${utils.pronoun(this, "subject")} purifies an affliction. ${aff.cureLineThirdParty ? aff.cureLineThirdParty() : ""}`);
+        if (aff.onPurify) aff.onPurify();
       } else if (affName === "health") {
         this.currentHealth = Math.min(this.maxHealth, this.currentHealth + this.purifyHealAmount);
         this.emit("line", "You are briefly enveloped in a brilliant white light as your wounds close.");
@@ -157,7 +169,10 @@ class Creature extends PhysicalThing {
     }
   }
   hasModifier(name) {
-    return Boolean(this.modifiers.find(i => i.name === name));
+    return Boolean(this.getModifier(name));
+  }
+  getModifier(name) {
+    return this.modifiers.find(i => i.name === name);
   }
   counterspell() {
     if (this.counterspellReady) {

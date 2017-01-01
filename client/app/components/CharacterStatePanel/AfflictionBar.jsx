@@ -18,17 +18,21 @@ export default class AfflictionBar extends React.Component {
       }
     }, 30)
     this.affDisplay = afflictions[props.affliction.name];
+    if (!this.affDisplay) this.affDisplay = { hotkey: "" }
 
-    const name = props.affliction.name;
-    for (var i = 0; i < name.length; i++) {
-      const letter = name[i];
+    const label = props.affliction.label;
+    for (var i = 0; i < label.length; i++) {
+      const letter = label[i];
       if (letter === this.affDisplay.hotkey) {
-        this.displayName = name.slice(0, i) + "[" + letter + "]" + name.slice(i+1, name.length);
+        this.displayName = label.slice(0, i) + "[" + letter + "]" + label.slice(i+1, label.length);
         break;
       }
     }
     if (!this.displayName) {
-      this.displayName = `${name} [${this.affDisplay.hotkey}]`;
+      this.displayName = `[${this.affDisplay.hotkey}] ${label}`;
+    }
+    if (props.affliction.hasCharges) {
+      this.displayName += ` (x${props.affliction.charges})`;
     }
   }
   componentWillUnmount() {

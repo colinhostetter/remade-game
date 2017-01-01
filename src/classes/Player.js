@@ -40,7 +40,7 @@ class Player {
     const statusEvents = ["damage", "movement", "modifierAdded", "modifierRemoved", "purifyUsed", "purifyReady"]
     statusEvents.forEach(event => this.character.on(event, sendState));
     this.character.on("locationContentsUpdated", sendLocationContents);
-    this.character.on("afflicted", aff => socket.emit("afflicted", aff));
+    this.character.on("modifierAdded", mod => socket.emit("modifierAdded", mod));
     this.character.on("death", () => socket.emit("death"));
 
     const Fireball = require("./abilities/Fireball");

@@ -1,7 +1,7 @@
 "use strict";
 
 const Creature = require("../Creature");
-const Fireball = require("../abilities/Fireball");
+const ab = require("../abilities/ElectricField");
 const basicAggressiveThinker = require("./thinkers/basicAggressive");
 
 class Ifrit extends Creature {
@@ -10,7 +10,7 @@ class Ifrit extends Creature {
     this.maxHealth = 50;
     this.currentHealth = 50;
     this.abilities = [
-      new Fireball(this)
+      new ab(this)
     ];
     this.shortDesc = "a wickedly horned ifrit";
     this.shortDescDead = "a cooling ifrit corpse";
